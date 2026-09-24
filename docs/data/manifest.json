@@ -1,1 +1,18 @@
-{"v":1,"free":null,"teacher":null,"auth":null}
+{
+ "v": 1,
+ "built": "2026-09-24T01:28:08.651Z",
+ "free": "free.5e4f6d2f9a7d.json",
+ "teacher": "teacher.86c3b3d476ea.bin",
+ "auth": "https://script.google.com/macros/s/AKfycbzwXawnIGcamXC1stIODyylguPnUWdVV4M-jCIC0746f7qwt3ELb5PBdnqc0ya2nxGX/exec",
+ "counts": {
+  "bookings": 48391,
+  "rooms": 1528,
+  "exclusiveRooms": 1413,
+  "withDetails": 391
+ },
+ "sizes": {
+  "free": 89229,
+  "freeGzip": 21644,
+  "teacher": 274393
+ }
+}
