@@ -1,0 +1,15 @@
+{
+  "name": "lpu-free-room",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android shell for docs/app, built by .github/workflows/apk.yml",
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "7.0.1",
+    "@capacitor-community/text-to-speech": "6.1.0",
+    "@capacitor/android": "7.6.9",
+    "@capacitor/core": "7.6.9"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.9"
+  }
+}

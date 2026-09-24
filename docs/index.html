@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1D4E89">
+<title>LPU Free Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#F4F6F9; --ink:#14213D; --muted:#5A6579; --sign:#1D4E89; --open:#17835A; --amber:#F2B233;
+          --cond:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+          --body:"Atkinson Hyperlegible",system-ui,"Segoe UI",sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.5 var(--body); }
+  main { max-width: 620px; margin: 0 auto; padding: 48px 22px 40px; }
+  .plate { display: inline-flex; align-items: baseline; background: var(--sign); color: #fff; border-left: 12px solid var(--open);
+           border-radius: 4px; padding: 12px 22px 14px; font: 700 64px/1 var(--cond); }
+  .plate span { opacity: .7; }
+  h1 { font: 700 44px/1.02 var(--cond); margin: 26px 0 10px; }
+  p { margin: 0 0 22px; color: var(--muted); max-width: 46ch; }
+  .go { display: block; text-decoration: none; border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; font-weight: 700; }
+  .go small { display: block; font-weight: 400; opacity: .85; font-size: 14px; }
+  .apk { background: var(--sign); color: #fff; }
+  .web { background: #fff; color: var(--sign); border: 2px solid var(--sign); }
+  .foot { margin-top: 34px; font-size: 14px; }
+  .foot a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <div class="plate" aria-hidden="true">34<span>-</span>504</div>
+  <h1>Find an empty room at LPU</h1>
+  <p>Pick a day and a slot to see every free room by block and floor, or ask out loud: "which floor in block 34 is free at 2?"</p>
+  <a class="go apk" id="apk" href="#">Download the Android app<small>Allow installs from your browser when Android asks.</small></a>
+  <a class="go web" href="app/">Use it in the browser<small>Same app, nothing to install</small></a>
+  <p class="foot">Teachers sign in with their @lpu.co.in email. <a href="admin/">Publish a timetable</a></p>
+</main>
+<script>
+  // owner.github.io/repo -> the newest release asset of that repository
+  (function () {
+    var host = location.hostname, a = document.getElementById("apk");
+    if (!/\.github\.io$/i.test(host)) { a.href = "https://github.com"; return; }
+    var owner = host.split(".")[0], seg = location.pathname.split("/")[1];
+    var repo = seg || (owner + ".github.io");
+    a.href = "https://github.com/" + owner + "/" + repo + "/releases/latest/download/lpu-free-room.apk";
+  })();
+</script>
+</body>
+</html>

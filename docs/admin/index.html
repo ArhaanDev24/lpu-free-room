@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Publish timetable - LPU Free Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#F4F6F9; --card:#fff; --ink:#14213D; --muted:#5A6579; --line:#D5DBE5; --sign:#1D4E89;
+          --open:#17835A; --amber:#F2B233; --bad:#C0392B;
+          --cond:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+          --body:"Atkinson Hyperlegible",system-ui,"Segoe UI",sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+  header { background: var(--sign); color: #fff; padding: 18px 24px; }
+  header h1 { margin: 0; font: 700 32px/1 var(--cond); }
+  header p { margin: 6px 0 0; opacity: .85; }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 20px 60px; }
+  section { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--line);
+            border-radius: 4px; padding: 16px 20px 18px; margin-bottom: 16px; }
+  section.done { border-left-color: var(--open); }
+  section.todo { border-left-color: var(--amber); }
+  h2 { margin: 0 0 4px; font: 700 24px/1.1 var(--cond); }
+  h2 small { font: 400 15px var(--body); color: var(--muted); margin-left: 6px; }
+  .lead { margin: 0 0 12px; color: var(--muted); max-width: 70ch; }
+  label { display: block; font-weight: 700; font-size: 14px; margin: 10px 0 0; }
+  label small { font-weight: 400; color: var(--muted); }
+  input[type=text], input[type=password], input[type=url], select {
+    display: block; width: 100%; margin-top: 4px; padding: 9px 11px; border: 1.5px solid var(--line);
+    border-radius: 5px; font: inherit; background: #fff; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  button { font: inherit; font-weight: 700; border-radius: 5px; padding: 10px 16px; cursor: pointer;
+           border: 1.5px solid var(--sign); background: var(--sign); color: #fff; margin-top: 14px; }
+  button.ghost { background: #fff; color: var(--sign); }
+  button:disabled { opacity: .5; cursor: default; }
+  .drop { border: 2px dashed var(--line); border-radius: 6px; padding: 18px; text-align: center; color: var(--muted); margin-top: 10px; }
+  .drop.over { border-color: var(--sign); background: #EEF3FA; }
+  .drop input { display: block; margin: 8px auto 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin: 12px 0 4px; }
+  .stat { border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; }
+  .stat b { display: block; font: 700 26px/1.1 var(--cond); }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .msg { margin: 10px 0 0; font-weight: 700; }
+  .msg.ok { color: var(--open); } .msg.bad { color: var(--bad); } .msg.warn { color: #8A5A00; }
+  table { border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  td, th { border: 1px solid var(--line); padding: 3px 8px; text-align: left; }
+  .cols { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
+  .cols label { font-weight: 400; margin: 0; display: inline-flex; gap: 6px; align-items: center; }
+  .radio { display: flex; gap: 18px; margin-top: 8px; }
+  .radio label { font-weight: 400; margin: 0; display: inline-flex; gap: 6px; align-items: center; }
+  code { background: #EEF1F6; padding: 1px 5px; border-radius: 3px; }
+  a { color: var(--sign); }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Publish timetable</h1>
+  <p>Upload the UMS report and room details. Phones download only what changed.</p>
+</header>
+<main>
+
+<section id="secConnect" class="todo">
+  <h2>1. Connect</h2>
+  <p class="lead">Settings stay in this browser only. The GitHub token needs <b>Contents: Read and write</b> on this one repository.</p>
+  <div class="grid">
+    <label>GitHub token<input type="password" id="token" autocomplete="off" placeholder="github_pat_..."></label>
+    <label>Repository <small>owner/name</small><input type="text" id="repo" placeholder="tarunjangwal/lpu-free-room"></label>
+    <label>Sign-in service address <small>Apps Script web app URL</small><input type="url" id="authUrl" placeholder="https://script.google.com/macros/s/.../exec"></label>
+    <label>Admin secret <small>shown by setup() in Apps Script</small><input type="password" id="adminSecret" autocomplete="off"></label>
+  </div>
+  <label>Branch<input type="text" id="branch" value="main" style="max-width:200px"></label>
+  <button id="btnConnect">Connect</button>
+  <p class="msg" id="connectMsg"></p>
+</section>
+
+<section id="secCurrent">
+  <h2>2. What phones have now</h2>
+  <div id="current" class="lead">Connect to see the published timetable.</div>
+</section>
+
+<section id="secTT">
+  <h2>3. Timetable <small>UMS report CSV</small></h2>
+  <p class="lead">Columns used: RoomNumber, AttendanceType, AttDay, AttendanceTime, TeacherLogin, Section, CourseCode, StudentGroup. Leave this empty to keep the published timetable.</p>
+  <div class="drop" id="dropTT">Drop the CSV here or pick it<input type="file" id="fileTT" accept=".csv,text/csv"></div>
+  <div id="ttOut"></div>
+</section>
+
+<section id="secRooms">
+  <h2>4. Room details <small>CSV or Excel, optional</small></h2>
+  <p class="lead">One row per room: a room column plus anything useful, such as Type, Capacity, Projector. Rooms listed here show these details in the app; others show only their number.</p>
+  <div class="drop" id="dropRooms">Drop the file here or pick it<input type="file" id="fileRooms" accept=".csv,.xlsx,.xls"></div>
+  <div id="roomsOut"></div>
+</section>
+
+<section id="secBuild">
+  <h2>5. Check and publish</h2>
+  <p class="lead">Every free-room answer is recomputed straight from the timetable and compared with the file phones will get, before anything is published.</p>
+  <button id="btnBuild" disabled>Build and check</button>
+  <div id="buildOut"></div>
+  <button id="btnPublish" disabled>Publish</button>
+  <p class="msg" id="pubMsg"></p>
+</section>
+
+</main>
+<script src="../app/lib/freeroom.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

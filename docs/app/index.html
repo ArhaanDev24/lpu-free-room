@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D4E89">
+<title>LPU Free Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section id="login" class="login" hidden>
+  <div class="login-sign">
+    <div class="sign-plate" aria-hidden="true"><span>34</span><span>504</span></div>
+    <h1>Find an empty room</h1>
+    <p>Pick a time and see every free room on campus, or just ask out loud.</p>
+  </div>
+
+  <div class="seg" role="tablist" aria-label="I am a">
+    <button type="button" role="tab" data-role="student" aria-selected="true">Student</button>
+    <button type="button" role="tab" data-role="teacher" aria-selected="false">Teacher</button>
+  </div>
+
+  <form id="fStudent" class="form" novalidate>
+    <label>Email<input type="email" id="sEmail" autocomplete="email" inputmode="email" required></label>
+    <label>Name <small>optional</small><input id="sName" autocomplete="name"></label>
+    <button class="primary" type="submit">Continue</button>
+  </form>
+
+  <form id="fTeacher" class="form" novalidate hidden>
+    <div class="seg small" role="tablist" aria-label="Account">
+      <button type="button" data-tm="in" aria-selected="true">Sign in</button>
+      <button type="button" data-tm="up" aria-selected="false">Create account</button>
+      <button type="button" data-tm="reset" aria-selected="false">Forgot password</button>
+    </div>
+    <label data-show="up">Full name<input id="tName" autocomplete="name"></label>
+    <label data-show="in up up2 reset reset2">LPU email<input type="email" id="tEmail" placeholder="name@lpu.co.in" autocomplete="email" inputmode="email"></label>
+    <label data-show="in up reset2"><span id="tPassLabel">Password</span><input type="password" id="tPass" autocomplete="current-password" minlength="8"></label>
+    <label data-show="up2 reset2">6-digit code from your email<input id="tOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]*"></label>
+    <button class="primary" type="submit" id="tGo">Sign in</button>
+    <p class="hint" id="tHint">Only @lpu.co.in addresses can create a teacher account.</p>
+  </form>
+  <p class="err" id="loginErr" role="alert"></p>
+</section>
+
+<section id="main" hidden>
+  <header class="top">
+    <div class="who">
+      <span class="role" id="whoRole">Student</span>
+      <span class="name" id="whoName"></span>
+    </div>
+    <button type="button" class="icon" id="btnSync" aria-label="Check for new timetable">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
+    </button>
+    <button type="button" class="icon" id="btnOut" aria-label="Sign out">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
+    </button>
+    <p class="status" id="status">Loading…</p>
+  </header>
+
+  <div id="pFree" class="pane">
+    <div class="strip" id="dayStrip" role="tablist" aria-label="Day"></div>
+    <div class="strip" id="slotStrip" role="tablist" aria-label="Time"></div>
+    <div class="custom" id="customBox" hidden>
+      <label>From<input type="time" id="tFrom" step="300"></label>
+      <label>To<input type="time" id="tTo" step="300"></label>
+    </div>
+    <div class="filters">
+      <label><span>Block</span><select id="fBlock"></select></label>
+      <label><span>Floor</span><select id="fFloor"></select></label>
+      <label id="fTypeBox"><span>Type</span><select id="fType"></select></label>
+      <label><span>Seats</span><input id="fCap" type="number" inputmode="numeric" min="0" placeholder="Any"></label>
+    </div>
+    <p class="summary" id="freeSummary"></p>
+    <div id="freeList" class="blocks"></div>
+  </div>
+
+  <div id="pAsk" class="pane" hidden>
+    <div id="chat" class="chat" aria-live="polite"></div>
+    <div class="examples" id="examples"></div>
+    <form class="askbar" id="askForm">
+      <button type="button" class="mic" id="mic" aria-label="Ask by voice">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <input id="askText" autocomplete="off" enterkeyhint="send" placeholder="Free rooms in block 34 at 2 pm">
+      <button type="submit" class="send" aria-label="Ask">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+    <label class="toggle"><input type="checkbox" id="speakOn" checked> Read answers aloud</label>
+  </div>
+
+  <div id="pRooms" class="pane" hidden>
+    <input class="search" id="roomQ" type="search" placeholder="Search a room, block or type" autocomplete="off">
+    <p class="summary" id="roomSummary"></p>
+    <div id="roomList" class="blocks"></div>
+  </div>
+
+  <div id="pTT" class="pane" hidden>
+    <input class="search" id="ttQ" type="search" placeholder="Section, staff ID, course or room" autocomplete="off">
+    <div id="ttSuggest" class="suggest"></div>
+    <p class="summary" id="ttHint">Search any section, staff ID, course or room to see its week.</p>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" data-tab="pFree" aria-selected="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4h9v17M14 8h5v13M9 12h1"/></svg>Free rooms</button>
+    <button type="button" role="tab" data-tab="pAsk" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Ask</button>
+    <button type="button" role="tab" data-tab="pRooms" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>All rooms</button>
+    <button type="button" role="tab" data-tab="pTT" aria-selected="false" class="teacher-only" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="1"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Timetables</button>
+  </nav>
+</section>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <header class="sheet-head">
+      <div>
+        <h2 id="shTitle"></h2>
+        <p id="shSub"></p>
+      </div>
+      <button type="button" class="icon" id="shClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <div class="strip" id="shDays" role="tablist" aria-label="Day"></div>
+    <div class="sheet-body" id="shBody"></div>
+    <div class="evinfo" id="shInfo" hidden></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="lib/freeroom.js"></script>
+<script src="lib/nlu.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.tj.lpufreeroom",
+  "appName": "LPU Free Room",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
