@@ -6,6 +6,9 @@
   var CFG = window.FR_CONFIG || { dataBase: "../data/" };
   var Cap = window.Capacitor;
   var NATIVE = !!(Cap && Cap.isNativePlatform && Cap.isNativePlatform());
+  var EXTENSION = !!CFG.extension || location.protocol === "chrome-extension:";
+  var DATA_BASES = CFG.dataBases || [CFG.dataBase];
+  var dataBase = DATA_BASES[0];
   var TYPE = { L: "Lecture", P: "Practical", T: "Tutorial" };
   var S = {
     user: null, man: null, model: null, tmodel: null,
@@ -22,6 +25,39 @@
   function load(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function drop(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+  function teacherSession() {
+    return EXTENSION && window.chrome && chrome.storage && chrome.storage.session;
+  }
+  function saveUser(user) {
+    if (EXTENSION && user.role === "teacher") {
+      drop("fr.user");
+      if (!teacherSession()) return Promise.reject(new Error("Secure teacher sign-in is unavailable. Reload the extension."));
+      return chrome.storage.session.set({ "fr.user": user });
+    }
+    save("fr.user", user);
+    return teacherSession() ? chrome.storage.session.remove("fr.user") : Promise.resolve();
+  }
+  function restoreUser() {
+    var legacy = load("fr.user");
+    if (!teacherSession()) {
+      if (EXTENSION && legacy && legacy.role === "teacher") { drop("fr.user"); return Promise.resolve(null); }
+      return Promise.resolve(legacy);
+    }
+    return chrome.storage.session.get("fr.user").then(function (items) {
+      if (items["fr.user"]) return items["fr.user"];
+      if (legacy && legacy.role === "teacher") {
+        drop("fr.user");
+        if (legacy.exp && legacy.exp < Date.now()) return null;
+        return chrome.storage.session.set({ "fr.user": legacy }).then(function () { return legacy; });
+      }
+      return legacy;
+    });
+  }
+  function dropUser() {
+    drop("fr.user");
+    if (teacherSession()) return chrome.storage.session.remove("fr.user");
+    return Promise.resolve();
+  }
   function isTeacher() { return !!(S.user && S.user.role === "teacher"); }
 
   var toastTimer;
@@ -33,7 +69,22 @@
     toastTimer = setTimeout(function () { t.classList.remove("show"); }, 3200);
   }
 
-  function url(name) { return CFG.dataBase + name; }
+  function fetchData(name, options, preferred, read) {
+    var bases = preferred ? [preferred].concat(DATA_BASES.filter(function (b) { return b !== preferred; })) : DATA_BASES;
+    function attempt(i) {
+      return fetch(bases[i] + name, options).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return read ? read(r) : r;
+      }).then(function (value) {
+        dataBase = bases[i];
+        return value;
+      }).catch(function (e) {
+        if (i + 1 < bases.length) return attempt(i + 1);
+        throw e;
+      });
+    }
+    return attempt(0);
+  }
 
   function when(iso) {
     if (!iso) return "";
@@ -52,8 +103,12 @@
     if (syncing) return syncing;
     $("btnSync").classList.add("spin");
     setStatus("Checking for a newer timetable…");
-    syncing = fetch(url("manifest.json") + "?t=" + Date.now(), { cache: "no-store" })
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    syncing = fetchData("manifest.json?t=" + Date.now(), { cache: "no-store" }, null, function (r) {
+      return r.json().then(function (man) {
+        if (!man || man.v !== 1 || (man.free && typeof man.free !== "string")) throw new Error("Invalid manifest");
+        return man;
+      });
+    })
       .then(function (man) {
         var old = S.man || {};
         if (!man.free) {
@@ -62,9 +117,8 @@
         }
         var job = Promise.resolve();
         if (force || old.free !== man.free || !S.model) {
-          job = fetch(url(man.free)).then(function (r) {
-            if (!r.ok) throw new Error("HTTP " + r.status);
-            return r.json();
+          job = fetchData(man.free, undefined, dataBase, function (r) {
+            return r.json().then(function (pub) { FR.openPublic(pub); return pub; });
           }).then(function (pub) {
             save("fr.pub", pub);
             setModel(pub);
@@ -83,7 +137,7 @@
         render();
       })
       .catch(function () {
-        setStatus(S.model ? "Offline. Showing the timetable from " + when(S.model.built) + "." :
+        setStatus(S.model ? "Can't check for updates. Showing saved timetable from " + when(S.model.built) + "." :
           "Can't reach the timetable. Check your connection and tap refresh.");
         render();
       })
@@ -94,7 +148,9 @@
   function fresh() {
     if (!S.model) return "";
     var c = S.model.counts || {};
-    return "Timetable of " + when(S.model.built) + ", " + (c.exclusiveRooms || 0) + " rooms" +
+    var age = Date.now() - new Date(S.model.built).getTime();
+    return (age > 14 * 86400000 ? "Timetable may be outdated. Published " : "Published ") +
+      when(S.model.built) + ", " + (c.exclusiveRooms || 0) + " rooms" +
       (isTeacher() && !S.tmodel ? ". Class details are not loaded yet." : "");
   }
 
@@ -105,10 +161,7 @@
     var cached = load("fr.teach"), got;
     if (!changed && cached && cached.name === S.man.teacher) got = Promise.resolve(FR.fromB64(cached.b64));
     else {
-      got = fetch(url(S.man.teacher)).then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.arrayBuffer();
-      }).then(function (b) {
+      got = fetchData(S.man.teacher, undefined, dataBase, function (r) { return r.arrayBuffer(); }).then(function (b) {
         var u = new Uint8Array(b);
         save("fr.teach", { name: S.man.teacher, b64: FR.toB64(u) });
         return u;
@@ -124,8 +177,7 @@
       // the admin may have rotated the key - fetch the current one
       return auth({ a: "key", token: S.user.token }).then(function (r) {
         S.user.key = r.key;
-        save("fr.user", S.user);
-        return FR.unseal(bytes, r.key);
+        return saveUser(S.user).then(function () { return FR.unseal(bytes, r.key); });
       });
     }).then(function (t) { S.tmodel = FR.openTeacher(t); });
   }
@@ -190,9 +242,13 @@
 
   function signedIn(r) {
     S.user = { role: "teacher", email: r.email, name: r.name, token: r.token, exp: r.exp, key: r.key };
-    save("fr.user", S.user);
-    enter();
-    syncTeacher(true).then(render);
+    return saveUser(S.user).then(function () {
+      enter();
+      return syncTeacher(true).then(render);
+    }).catch(function (e) {
+      S.user = null;
+      throw e;
+    });
   }
 
   function wireLogin() {
@@ -215,8 +271,10 @@
       var email = $("sEmail").value.trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("loginErr").textContent = "Enter a valid email address."; return; }
       S.user = { role: "student", email: email, name: $("sName").value.trim() };
-      save("fr.user", S.user);
-      enter();
+      saveUser(S.user).then(enter).catch(function () {
+        S.user = null;
+        $("loginErr").textContent = "Couldn't save sign-in. Please try again.";
+      });
     });
 
     $("fTeacher").addEventListener("submit", function (ev) {
@@ -488,6 +546,7 @@
     $("tFrom").value = FR.hhmm(f.s); $("tTo").value = FR.hhmm(f.e);
     S.filters = { block: f.block || "", floor: f.floor === "" || f.floor == null ? "" : String(f.floor),
                   type: S.model.types.indexOf(f.type) >= 0 ? f.type : "", cap: f.minCap || "" };
+    if (EXTENSION) save("fr.filters", S.filters);
     $("fCap").value = S.filters.cap;
     fillFilters();
     showTab("pFree");
@@ -652,6 +711,23 @@
   }
 
   function wireMain() {
+    if (EXTENSION) {
+      $("btnNow").hidden = false;
+      $("btnPanel").hidden = !!CFG.panel;
+    }
+    $("btnNow").addEventListener("click", function () {
+      S.di = FR.nowInfo().di;
+      S.slot = "now";
+      showTab("pFree");
+    });
+    $("btnPanel").addEventListener("click", function () {
+      if (!window.chrome || !chrome.sidePanel || typeof chrome.sidePanel.open !== "function" || !chrome.windows) {
+        return toast("Side panel isn't available in this Chrome version.");
+      }
+      chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT }).catch(function () {
+        toast("Couldn't open the side panel. Try Chrome's side panel menu.");
+      });
+    });
     document.querySelectorAll("[data-tab]").forEach(function (b) {
       b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); });
     });
@@ -659,9 +735,12 @@
     $("btnOut").addEventListener("click", function () {
       if (!confirm("Sign out of LPU Free Room?")) return;
       S.user = null; S.tmodel = null;
-      drop("fr.user"); drop("fr.teach");
+      drop("fr.teach");
       $("chat").innerHTML = "";
       showLogin();
+      dropUser().catch(function () {
+        $("loginErr").textContent = "Couldn't clear the sign-in session. Reload Chrome before using this device again.";
+      });
     });
 
     $("dayStrip").addEventListener("click", function (e) {
@@ -695,10 +774,11 @@
     }
     $("tFrom").addEventListener("change", custom);
     $("tTo").addEventListener("change", custom);
-    $("fBlock").addEventListener("change", function () { S.filters.block = this.value; fillFloors(); renderFree(); });
-    $("fFloor").addEventListener("change", function () { S.filters.floor = this.value; renderFree(); });
-    $("fType").addEventListener("change", function () { S.filters.type = this.value; renderFree(); });
-    $("fCap").addEventListener("input", function () { S.filters.cap = this.value ? +this.value : ""; renderFree(); });
+    function rememberFilters() { if (EXTENSION) save("fr.filters", S.filters); }
+    $("fBlock").addEventListener("change", function () { S.filters.block = this.value; fillFloors(); rememberFilters(); renderFree(); });
+    $("fFloor").addEventListener("change", function () { S.filters.floor = this.value; rememberFilters(); renderFree(); });
+    $("fType").addEventListener("change", function () { S.filters.type = this.value; rememberFilters(); renderFree(); });
+    $("fCap").addEventListener("input", function () { S.filters.cap = this.value ? +this.value : ""; rememberFilters(); renderFree(); });
 
     $("roomQ").addEventListener("input", renderRooms);
     $("ttQ").addEventListener("input", suggest);
@@ -760,11 +840,11 @@
   // ------------------------------------------------------------------ boot --
 
   function boot() {
-    S.user = load("fr.user");
     S.speak = load("fr.speak") !== false;
-    if (S.user && S.user.role === "teacher" && S.user.exp && S.user.exp < Date.now()) {
-      S.user = null; drop("fr.user");
-      $("loginErr").textContent = "Your teacher sign-in expired. Sign in again.";
+    if (EXTENSION) {
+      var filters = load("fr.filters") || {};
+      S.filters = { block: filters.block || "", floor: filters.floor || "", type: filters.type || "", cap: filters.cap || "" };
+      $("fCap").value = S.filters.cap;
     }
     var man = load("fr.man"), pub = load("fr.pub");
     if (man && pub) {
@@ -773,12 +853,25 @@
     }
     wireLogin();
     wireMain();
-    if (S.user) enter(); else showLogin();
-    if (S.model) setStatus("Timetable of " + when(S.model.built) + ". Checking for a newer one…");
-    var cached = load("fr.teach");
-    var opened = isTeacher() && cached && man && cached.name === man.teacher ?
-      openSealed(FR.fromB64(cached.b64)).catch(function () {}) : Promise.resolve();
-    opened.then(function () { render(); sync(false); });
+    restoreUser().then(function (user) {
+      S.user = user;
+      if (S.user && S.user.role === "teacher" && S.user.exp && S.user.exp < Date.now()) {
+        S.user = null;
+        dropUser().catch(function () {});
+        $("loginErr").textContent = "Your teacher sign-in expired. Sign in again.";
+      }
+      if (S.user) enter(); else showLogin();
+      if (S.model) setStatus("Saved timetable from " + when(S.model.built) + ". Checking for updates…");
+      var cached = load("fr.teach");
+      var opened = isTeacher() && cached && man && cached.name === man.teacher ?
+        openSealed(FR.fromB64(cached.b64)).catch(function () {}) : Promise.resolve();
+      opened.then(function () { render(); sync(false); });
+    }).catch(function () {
+      S.user = null;
+      showLogin();
+      $("loginErr").textContent = "Couldn't restore sign-in. Reload the extension.";
+      sync(false);
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
