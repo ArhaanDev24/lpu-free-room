@@ -1,0 +1,30 @@
+/* The same app in Chrome's compact action popup. */
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/atkinson-400.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/atkinson-700.ttf") format("truetype"); font-weight: 700; }
+@font-face { font-family: "Barlow Condensed"; src: url("fonts/barlow-500.ttf") format("truetype"); font-weight: 500; }
+@font-face { font-family: "Barlow Condensed"; src: url("fonts/barlow-600.ttf") format("truetype"); font-weight: 600; }
+@font-face { font-family: "Barlow Condensed"; src: url("fonts/barlow-700.ttf") format("truetype"); font-weight: 700; }
+html {
+  width: 420px;
+  height: 580px;
+  overflow: hidden;
+}
+body {
+  width: 420px;
+  height: 580px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.top { top: 0; }
+.tabs {
+  width: 420px;
+  left: 0;
+  right: auto;
+}
+.sheet { width: 420px; height: 580px; }
+.sheet-card { height: 560px; }
+.toast { max-width: 390px; }
+@media (max-width: 420px) {
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -15,7 +15,17 @@ class and can open any room, section, staff or course timetable on a timeline.
 | `docs/data/` | What phones download. Written only by the admin page. |
 | `backend/Code.gs` | Teacher sign-in: accounts, emailed 6-digit codes, key release (Google Apps Script). |
 | `app/`, `.github/` | Builds the Android APK on GitHub's servers whenever the app changes. |
+| `manifest.json`, `extension/` | Chrome extension popup, icons, compact styling and bundled fonts. The popup runs `docs/app/` directly. |
 | `test/` | Tests for all of the above. |
+
+## Chrome extension
+
+1. Download or clone this repository, then open `chrome://extensions` in Google Chrome.
+2. Turn on **Developer mode** and click **Load unpacked**.
+3. Select the **repository root** (the folder containing `manifest.json`), then pin **LPU Free Room** from Chrome's Extensions menu.
+4. Click its icon to use the same Student and Teacher screens as the web and Android app. Teacher sign-in, room filters, questions, voice input and timetable views use the shared `docs/app/` code.
+
+The extension reads the published timetable from this repository's `main/docs/data/` through `raw.githubusercontent.com`, so it works even before GitHub Pages is enabled. It stores the timetable and sign-in state in the extension's own local storage. Updating `docs/app/` also updates the popup; reload the extension on `chrome://extensions` after changing its files.
 
 ## One-time setup (about 20 minutes, all in the browser)
 
