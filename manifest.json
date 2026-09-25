@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "LPU Free Room",
+  "version": "1.0.0",
+  "description": "Find available LPU rooms by day, time, block, floor and capacity. Teachers can view timetables.",
+  "action": {
+    "default_title": "LPU Free Room",
+    "default_popup": "docs/app/index.html",
+    "default_icon": {
+      "16": "extension/icons/icon-16.png",
+      "32": "extension/icons/icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "extension/icons/icon-16.png",
+    "32": "extension/icons/icon-32.png",
+    "48": "extension/icons/icon-48.png",
+    "128": "extension/icons/icon-128.png"
+  },
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*",
+    "https://script.google.com/*",
+    "https://script.googleusercontent.com/*"
+  ]
+}
