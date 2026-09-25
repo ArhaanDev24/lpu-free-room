@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "LPU Free Room",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Find available LPU rooms by day, time, block, floor and capacity. Teachers can view timetables.",
+  "permissions": ["storage", "sidePanel"],
   "action": {
     "default_title": "LPU Free Room",
     "default_popup": "docs/app/index.html",
@@ -17,7 +18,11 @@
     "48": "extension/icons/icon-48.png",
     "128": "extension/icons/icon-128.png"
   },
+  "side_panel": {
+    "default_path": "extension/panel.html"
+  },
   "host_permissions": [
+    "https://arhaandev24.github.io/*",
     "https://raw.githubusercontent.com/*",
     "https://script.google.com/*",
     "https://script.googleusercontent.com/*"

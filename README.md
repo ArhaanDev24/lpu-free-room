@@ -15,7 +15,7 @@ class and can open any room, section, staff or course timetable on a timeline.
 | `docs/data/` | What phones download. Written only by the admin page. |
 | `backend/Code.gs` | Teacher sign-in: accounts, emailed 6-digit codes, key release (Google Apps Script). |
 | `app/`, `.github/` | Builds the Android APK on GitHub's servers whenever the app changes. |
-| `manifest.json`, `extension/` | Chrome extension popup, icons, compact styling and bundled fonts. The popup runs `docs/app/` directly. |
+| `manifest.json`, `extension/` | Chrome extension popup, side panel, icons, compact styling and bundled fonts. Both views run `docs/app/`. |
 | `test/` | Tests for all of the above. |
 
 ## Chrome extension
@@ -23,9 +23,9 @@ class and can open any room, section, staff or course timetable on a timeline.
 1. Download or clone this repository, then open `chrome://extensions` in Google Chrome.
 2. Turn on **Developer mode** and click **Load unpacked**.
 3. Select the **repository root** (the folder containing `manifest.json`), then pin **LPU Free Room** from Chrome's Extensions menu.
-4. Click its icon to use the same Student and Teacher screens as the web and Android app. Teacher sign-in, room filters, questions, voice input and timetable views use the shared `docs/app/` code.
+4. Click its icon to use the same Student and Teacher screens as the web and Android app. Use **Now** to jump back to rooms free now, or **Panel** to keep the app open beside other tabs. The extension remembers your room filters.
 
-The extension reads the published timetable from this repository's `main/docs/data/` through `raw.githubusercontent.com`, so it works even before GitHub Pages is enabled. It stores the timetable and sign-in state in the extension's own local storage. Updating `docs/app/` also updates the popup; reload the extension on `chrome://extensions` after changing its files.
+The extension reads the published timetable from GitHub Pages, with this repository's `main/docs/data/` on `raw.githubusercontent.com` as a fallback. It shows the publication date and warns when the timetable is over 14 days old or when it cannot check for updates. Public timetable data and student preferences are cached locally; teacher tokens and decryption keys are kept in Chrome's session storage and cleared when Chrome restarts. Updating `docs/app/` also updates the popup and side panel; reload the extension on `chrome://extensions` after changing its files.
 
 ## One-time setup (about 20 minutes, all in the browser)
 
@@ -112,4 +112,5 @@ node test/test_backend.js    # sign-in service against stand-in Google services
 npm install jsdom
 node test/test_ui.js         # app screens, student and teacher flows
 node test/test_admin.js      # admin page against a stand-in GitHub
+node test/test_extension.js  # extension fallback, session storage, quick actions
 ```

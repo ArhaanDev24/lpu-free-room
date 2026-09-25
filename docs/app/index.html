@@ -7,7 +7,7 @@
 <title>LPU Free Room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link id="webFonts" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -52,6 +52,8 @@
       <span class="role" id="whoRole">Student</span>
       <span class="name" id="whoName"></span>
     </div>
+    <button type="button" class="quick" id="btnNow" title="Show free rooms now" hidden>Now</button>
+    <button type="button" class="quick" id="btnPanel" title="Open the side panel" hidden>Panel</button>
     <button type="button" class="icon" id="btnSync" aria-label="Check for new timetable">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
     </button>
